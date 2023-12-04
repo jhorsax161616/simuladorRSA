@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
 # Cuidado con estos datos
 llave_publica_abierta = None
+llave_privada_abierta = None
 
 def gui_generar():
     inicio.hide()
@@ -150,6 +151,32 @@ def btnExportar():
     
     guardarArchivo("texto_encriptado", boxTextoEncriptado)
 
+# EVENTOS DE DESENCRIPTAR
+def btnAbrirTexto():
+    texto = abrirArchivo()
+    desencriptar.boxTextoDesencriptar.setPlainText(texto)
+    
+
+def btnSeleccionarPrivada():
+    global llave_privada_abierta
+    llave_privada_abierta = texto_a_llave(abrirArchivo())
+
+def btnDesencriptarTexto():
+    # Validar si hay llave privada
+    if not llave_privada_abierta:
+        QMessageBox.warning(None, 'Sin llave privada', 'Seleccione su llave privada!!!', QMessageBox.Ok)
+        return
+    
+    boxTextoDesencriptar = desencriptar.boxTextoDesencriptar.toPlainText()
+    # Validación texto vacío
+    if boxTextoDesencriptar == "":
+        QMessageBox.warning(None, 'Texto Vacío', 'Ingrese algo de texto por favor', QMessageBox.Ok)
+        return
+    
+    texto_desencriptado = descifrar_mensaje(boxTextoDesencriptar, llave_privada_abierta)
+    
+    desencriptar.boxTextoDesencriptado.setPlainText(texto_desencriptado)
+
 # FUNCIONES GENERALES
 def guardarArchivo(name: str, value: str):
     archivo, _ = QFileDialog.getSaveFileName(None, "Guardar Llave...", f'./{name}.txt', 'Text files (.txt)')
@@ -162,9 +189,9 @@ def abrirArchivo():
     
     if archivo:
         with open(archivo, 'rt') as f:
-            llave = f.read()
+            texto = f.read()
             
-        return llave
+        return texto
     
     return None
 
@@ -224,6 +251,9 @@ if __name__ == "__main__":
     
     # Relacionando los Botones de Desencriptar
     desencriptar.btnRegresar.clicked.connect(volver)
+    desencriptar.btnAbrirTexto.clicked.connect(btnAbrirTexto)
+    desencriptar.btnSeleccionarPrivada.clicked.connect(btnSeleccionarPrivada)
+    desencriptar.btnDesencriptarTexto.clicked.connect(btnDesencriptarTexto)
     
     # Ejecutable
     inicio.show()
