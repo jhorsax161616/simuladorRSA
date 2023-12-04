@@ -1,6 +1,6 @@
 import random
 from sympy import mod_inverse
-
+from math import gcd
 
 key = "AFOE439&(y"
 key2 = "91642ris#x"
@@ -27,6 +27,24 @@ def generar_primo(bits) -> int:
     while not es_primo(primo):
         primo = random.getrandbits(bits)
     return primo
+
+def generar_exponente_encriptacion(phi_n):
+    # Genera un exponente de encriptación e tal que 1 < e < phi_n y gcd(e, phi_n) = 1
+    while True:
+        e = random.randint(2, phi_n - 1)
+        if gcd(e, phi_n) == 1:
+            return e
+
+def validar_exponente_encriptacion(phi_n, e):
+    # Verificar que 1 < e < phi(N)
+    if not (1 < e < phi_n):
+        return False
+
+    # Verificar que e y phi(N) son coprimos
+    if gcd(e, phi_n) != 1:
+        return False
+
+    return True
 
 def es_primo(n, k=5) -> bool:
     # Probabilisticamente verifica si un número es primo usando el test de Miller-Rabin

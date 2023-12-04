@@ -18,10 +18,15 @@ def gui_desencriptar():
     inicio.hide()
     desencriptar.show()
     
+def btnQueEs():
+    inicio.hide()
+    queEs.show()
+    
 def  volver():
     generar.hide()
     encriptar.hide()
     desencriptar.hide()
+    queEs.hide()
     inicio.show()
     
 # EVENTOS DE GENERAR
@@ -43,6 +48,16 @@ def btnGenerarPublica():
     if not p:
         return
     
+    if p == q:
+        QMessageBox.warning(None, 'Advertencia', 'Los números primos deben ser distintos!!!', QMessageBox.Ok)
+        return
+    
+    phi_n = (p - 1) * (q - 1)
+    
+    if not validar_exponente_encriptacion(phi_n, e):
+        generar.errorPrimo3.setText("Exponente Inválido")
+        return
+    
     limpiarDatosErrores()
     
     # Generar llave publica
@@ -57,8 +72,18 @@ def btnGenerarPublica():
 
 def btnGenerarPrivada():
     p, q, e = validacionesDeEntrada()
-    
+
     if not p:
+        return
+    
+    if p == q:
+        QMessageBox.warning(None, 'Advertencia', 'Los números primos deben ser distintos!!!', QMessageBox.Ok)
+        return
+    
+    phi_n = (p - 1) * (q - 1)
+    
+    if not validar_exponente_encriptacion(phi_n, e):
+        generar.errorPrimo3.setText("El exponente de encriptación no es válido")
         return
     
     limpiarDatosErrores()
@@ -72,6 +97,55 @@ def btnGenerarPrivada():
     # Guardar llave en un archivo de texto
     guardarArchivo("llave_privada", priv)
     
+def btnGenerarExponente():
+    boxPrimer = generar.boxPrimer.text()
+    boxSegun = generar.boxSegun.text()
+    # Validando campos vacíos
+    if boxPrimer == "":
+        generar.errorPrimo1.setText("Rellenar este campo!!!")
+        return (False, False, False)
+    limpiarDatosErrores()
+    if boxSegun == "":
+        generar.errorPrimo2.setText("Rellenar este campo!!!")
+        return (False, False, False)
+    limpiarDatosErrores()
+    if not es_numero(boxPrimer):
+        generar.errorPrimo1.setText("Este valor no es un número!!!")
+        return (False, False, False)
+    limpiarDatosErrores()
+    if not es_numero(boxSegun):
+        generar.errorPrimo2.setText("Este valor no es un número!!!")
+        return (False, False, False)
+    limpiarDatosErrores()
+    # Validar si es primo
+    if not es_primo(int(boxPrimer)):
+        generar.errorPrimo1.setText("Este no es un número PRIMO!!!")
+        return (False, False, False)
+    limpiarDatosErrores()
+    if not es_primo(int(boxSegun)):
+        generar.errorPrimo2.setText("Este no es un número PRIMO!!!")
+        return (False, False, False)
+    limpiarDatosErrores()
+    # Que sean de 3 digitos
+    if len(boxPrimer) < 3:
+        generar.errorPrimo1.setText("Tiene que ser mayor a 3 dígitos!")
+        return (False, False, False)
+    limpiarDatosErrores()
+    if len(boxSegun) < 3:
+        generar.errorPrimo2.setText("Tiene que ser mayor a 3 dígitos!")
+        return (False, False, False)
+    limpiarDatosErrores()
+    if boxPrimer == boxSegun:
+        QMessageBox.warning(None, 'Advertencia', 'Los números primos deben ser distintos!!!', QMessageBox.Ok)
+        return
+    limpiarDatosErrores()
+    phi_n = (int(boxPrimer) - 1) * (int(boxSegun) - 1)
+    
+    try:
+        generar.boxExpo.setText(str(generar_exponente_encriptacion(phi_n)))
+    except:
+        QMessageBox.warning(None, 'Advertencia', 'Seleccione un mayor rango entre los números!', QMessageBox.Ok)
+        generar.boxExpo.setText("")
 
 def limpiarDatosErrores() -> None:
     generar.errorPrimo1.setText("")
@@ -109,6 +183,15 @@ def validacionesDeEntrada() -> tuple:
         generar.errorPrimo3.setText("Este valor no es un número!!!")
         return (False, False, False)
     limpiarDatosErrores()
+    # Que sean de 3 digitos
+    if len(boxPrimer) < 3:
+        generar.errorPrimo1.setText("Tiene que ser mayor a 3 dígitos!")
+        return (False, False, False)
+    limpiarDatosErrores()
+    if len(boxSegun) < 3:
+        generar.errorPrimo2.setText("Tiene que ser mayor a 3 dígitos!")
+        return (False, False, False)
+    limpiarDatosErrores()
     # Validar si es primo
     if not es_primo(int(boxPrimer)):
         generar.errorPrimo1.setText("Este no es un número PRIMO!!!")
@@ -118,17 +201,15 @@ def validacionesDeEntrada() -> tuple:
         generar.errorPrimo2.setText("Este no es un número PRIMO!!!")
         return (False, False, False)
     limpiarDatosErrores()
-    if not es_primo(int(boxExpo)):
-        generar.errorPrimo3.setText("Este no es un número PRIMO!!!")
-        return (False, False, False)
-    limpiarDatosErrores()
     return (int(boxPrimer), int(boxSegun), int(boxExpo))
 
 # EVENTOS DE ENCRIPTAR
 def btnSeleccionarPublica():
     global llave_publica_abierta
-    llave_publica_abierta = texto_a_llave(abrirArchivo())
-
+    try:
+        llave_publica_abierta = texto_a_llave(abrirArchivo())
+    except:
+        llave_publica_abierta = None
 def btnEncriptarTexto():
     # Validar si hay llave pública
     if not llave_publica_abierta:
@@ -159,7 +240,10 @@ def btnAbrirTexto():
 
 def btnSeleccionarPrivada():
     global llave_privada_abierta
-    llave_privada_abierta = texto_a_llave(abrirArchivo())
+    try:
+        llave_privada_abierta = texto_a_llave(abrirArchivo())
+    except:
+        llave_privada_abierta = None
 
 def btnDesencriptarTexto():
     # Validar si hay llave privada
@@ -172,17 +256,21 @@ def btnDesencriptarTexto():
     if boxTextoDesencriptar == "":
         QMessageBox.warning(None, 'Texto Vacío', 'Ingrese algo de texto por favor', QMessageBox.Ok)
         return
-    
-    texto_desencriptado = descifrar_mensaje(boxTextoDesencriptar, llave_privada_abierta)
-    
+    try:
+        texto_desencriptado = descifrar_mensaje(boxTextoDesencriptar, llave_privada_abierta)
+    except:
+        desencriptar.boxTextoDesencriptado.setPlainText("##########")    
+        QMessageBox.warning(None, 'Advertencia!!!', 'La llave privada no corresponde o la información fue alterada!', QMessageBox.Ok)
+        return
     desencriptar.boxTextoDesencriptado.setPlainText(texto_desencriptado)
 
 # FUNCIONES GENERALES
 def guardarArchivo(name: str, value: str):
     archivo, _ = QFileDialog.getSaveFileName(None, "Guardar Llave...", f'./{name}.txt', 'Text files (.txt)')
     
-    with open(archivo, 'wt') as f:
-        f.write(value)
+    if archivo:
+        with open(archivo, 'wt') as f:
+            f.write(value)
         
 def abrirArchivo():
     archivo, _ = QFileDialog.getOpenFileName(None, 'Abrir Llave...', './', 'Text files (.txt)')
@@ -196,32 +284,7 @@ def abrirArchivo():
     return None
 
 if __name__ == "__main__":
-    """ bits = 16  # Número pequeño para propósitos de demostración
-    # Genera claves RSA con primos de 'bits' bits
-    p = generar_primo(bits)
-    q = generar_primo(bits)
-    # Uso del código para generar claves
-    llave_publica = generar_clave_publica(p, q)
-    llave_privada = generar_clave_privada(p, q)
-
-    print("Llave Pública:", llave_publica)
-    print("Llave Privada:", llave_privada)
-    
-    publ = llave_a_texto_public(llave_publica)
-    priv = llave_a_texto_private(llave_privada)
-    print(publ)
-    print()
-    print(priv)
-    print()
-    print("Llave Pública:", texto_a_llave(publ))
-    print("Llave Privada:", texto_a_llave(priv))
-    
-    mensaje = "Hola mundo"
-    
-    mencifra = cifrar_mensaje(mensaje, llave_publica)
-    print(mencifra)    
-    print(f"Descifrado: {descifrar_mensaje(mencifra, llave_privada)}") """
-    
+        
     # Iniciando la aplicación
     app = QtWidgets.QApplication([])
     
@@ -230,17 +293,22 @@ if __name__ == "__main__":
     generar = uic.loadUi('generar.ui')
     encriptar = uic.loadUi('encriptar.ui')
     desencriptar = uic.loadUi('desencriptar.ui')
+    queEs = uic.loadUi('queEs.ui')
+    
+    queEs.btnRegresar.clicked.connect(volver)
     
     # Relacionando los Botones de Inicio
     inicio.btnGenerar.clicked.connect(gui_generar)
     inicio.btnEncriptar.clicked.connect(gui_encriptar)
     inicio.btnDesencriptar.clicked.connect(gui_desencriptar)
+    inicio.btnQueEs.clicked.connect(btnQueEs)
     
     # Relacionando los Botones de Generar
     generar.btnRegresar.clicked.connect(volver)
     generar.btnGenerarPrimos.clicked.connect(btnGenerarPrimos)
     generar.btnGenerarPublica.clicked.connect(btnGenerarPublica)
     generar.btnGenerarPrivada.clicked.connect(btnGenerarPrivada)
+    generar.btnGenerarExponente.clicked.connect(btnGenerarExponente)
     
     
     # Relacionando los Botones de Encriptar
