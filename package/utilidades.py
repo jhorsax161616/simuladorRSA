@@ -83,7 +83,7 @@ def cifrar_mensaje(mensaje: str, llave_publica: tuple) -> str:
     mensaje_numeros = [ord(c) for c in mensaje]
 
     # Cifrar cada número del mensaje
-    mensaje_cifrado = ([pow(num, e, N) for num in mensaje_numeros])
+    mensaje_cifrado = "_".join([str(pow(num, e, N)) for num in mensaje_numeros])
 
     return mensaje_cifrado
 
@@ -91,6 +91,10 @@ def descifrar_mensaje(mensaje_cifrado: str, llave_privada: tuple) -> str:
     # Desempaquetar la llave privada
     N, d = llave_privada
 
+    #
+    mensaje_cifrado = mensaje_cifrado.split("_")
+    mensaje_cifrado = [int(i) for i in mensaje_cifrado]
+    
     # Descifrar cada número del mensaje cifrado
     mensaje_descifrado_numeros = [pow(num, d, N) for num in mensaje_cifrado]
 

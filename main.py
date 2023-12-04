@@ -1,6 +1,9 @@
 from package.utilidades import *
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFileDialog, QMessageBox
+
+# Cuidado con estos datos
+llave_publica_abierta = None
 
 def gui_generar():
     inicio.hide()
@@ -20,7 +23,7 @@ def  volver():
     desencriptar.hide()
     inicio.show()
     
-# Eventos de GENERAR
+# EVENTOS DE GENERAR
 def btnGenerarPrimos() -> None:
     bits = 16
     
@@ -68,11 +71,6 @@ def btnGenerarPrivada():
     # Guardar llave en un archivo de texto
     guardarArchivo("llave_privada", priv)
     
-def guardarArchivo(name: str, value: str):
-    archivo, _ = QFileDialog.getSaveFileName(None, "Guardar Llave...", 'C:\\')
-    
-    with open(archivo, 'wt') as f:
-        f.write(value)
 
 def limpiarDatosErrores() -> None:
     generar.errorPrimo1.setText("")
@@ -125,8 +123,50 @@ def validacionesDeEntrada() -> tuple:
     limpiarDatosErrores()
     return (int(boxPrimer), int(boxSegun), int(boxExpo))
 
-def errorGenerarBox(number: int) -> str:
-    pass
+# EVENTOS DE ENCRIPTAR
+def btnSeleccionarPublica():
+    global llave_publica_abierta
+    llave_publica_abierta = texto_a_llave(abrirArchivo())
+
+def btnEncriptarTexto():
+    # Validar si hay llave pública
+    if not llave_publica_abierta:
+        QMessageBox.warning(None, 'Sin llave pública', 'Seleccione su llave pública!!!', QMessageBox.Ok)
+        return
+        
+    boxTextoEncriptar = encriptar.boxTextoEncriptar.toPlainText()
+    
+    # Validación texto vacío
+    if boxTextoEncriptar == "":
+        QMessageBox.warning(None, 'Texto Vacío', 'Ingrese algo de texto por favor', QMessageBox.Ok)
+        return
+    
+    texto_encriptado = cifrar_mensaje(boxTextoEncriptar, llave_publica_abierta)
+
+    encriptar.boxTextoEncriptado.setPlainText(texto_encriptado)
+    
+def btnExportar():
+    boxTextoEncriptado = encriptar.boxTextoEncriptado.toPlainText()
+    
+    guardarArchivo("texto_encriptado", boxTextoEncriptado)
+
+# FUNCIONES GENERALES
+def guardarArchivo(name: str, value: str):
+    archivo, _ = QFileDialog.getSaveFileName(None, "Guardar Llave...", f'./{name}.txt', 'Text files (.txt)')
+    
+    with open(archivo, 'wt') as f:
+        f.write(value)
+        
+def abrirArchivo():
+    archivo, _ = QFileDialog.getOpenFileName(None, 'Abrir Llave...', './', 'Text files (.txt)')
+    
+    if archivo:
+        with open(archivo, 'rt') as f:
+            llave = f.read()
+            
+        return llave
+    
+    return None
 
 if __name__ == "__main__":
     """ bits = 16  # Número pequeño para propósitos de demostración
@@ -178,6 +218,9 @@ if __name__ == "__main__":
     
     # Relacionando los Botones de Encriptar
     encriptar.btnRegresar.clicked.connect(volver)
+    encriptar.btnSeleccionarPublica.clicked.connect(btnSeleccionarPublica)
+    encriptar.btnEncriptarTexto.clicked.connect(btnEncriptarTexto)
+    encriptar.btnExportar.clicked.connect(btnExportar)
     
     # Relacionando los Botones de Desencriptar
     desencriptar.btnRegresar.clicked.connect(volver)
